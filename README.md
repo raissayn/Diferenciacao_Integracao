@@ -1,28 +1,56 @@
-# Investigação de Diferenciação e Integração Numéricas
+# Diferenciação e Integração Numéricas
 
-Repositório inicial da atividade de investigação da disciplina de **Cálculo Numérico**.
+Atividade de investigação computacional da disciplina de **Cálculo Numérico** — UNIFAL-MG.
 
-## Estrutura
+**Tema:** análise, comparação e aplicação de métodos numéricos para diferenciação e integração.
+
+## Objetivo
+
+Este projeto implementa e executa os experimentos das seções obrigatórias do roteiro:
+
+- fórmulas de diferenças finitas progressiva, regressiva e central;
+- segunda derivada numérica;
+- diferenciação de dados tabelados;
+- regras do Ponto Médio, Trapézios e Simpson 1/3;
+- cotas de erro e determinação experimental de subintervalos;
+- Quadratura de Gauss-Legendre;
+- comparação global entre métodos;
+- aplicações em comprimento de curva, trabalho de força variável e distribuição normal.
+
+## Estrutura do Projeto
 
 ```text
-investigacao-calculo-numerico/
+Derivacao_Integracao/
 ├── diferencas.py
 ├── integracao.py
 ├── main.py
 ├── requirements.txt
 ├── README.md
-├── .gitignore
-├── graficos/
+├── graficosGerados/
+│   ├── secao-1/
+│   ├── secao-2/
+│   ├── secao-3/
+│   └── secao-5/
 └── relatorio/
 ```
 
-- `diferencas.py`: fórmulas-base de diferenças finitas fornecidas no enunciado.
-- `integracao.py`: regras-base de Newton-Cotes, cotas de erro e Gauss-Legendre fornecidas no enunciado.
-- `main.py`: arquivo em que as questões, experimentos, tabelas e gráficos serão implementados.
-- `graficos/`: saída dos gráficos produzidos durante a investigação.
-- `relatorio/`: local para organizar o relatório final em PDF.
+## Arquivos Principais
 
-## Preparação do ambiente
+- `diferencas.py`: implementa as fórmulas de diferenças finitas fornecidas no roteiro.
+- `integracao.py`: implementa Ponto Médio, Trapézios, Simpson 1/3, integração por tabela, cotas de erro e Gauss-Legendre.
+- `main.py`: executa os experimentos, imprime tabelas/resultados no terminal e gera os gráficos.
+- `graficosGerados/`: contém as figuras geradas em formato `.png` para uso no relatório.
+- `requirements.txt`: lista as dependências necessárias para executar o projeto.
+
+## Dependências
+
+O projeto utiliza:
+
+- `numpy`
+- `matplotlib`
+- `scipy`
+
+## Preparação do Ambiente
 
 ```bash
 python3 -m venv .venv
@@ -32,8 +60,24 @@ pip install -r requirements.txt
 
 ## Execução
 
+Para executar todos os experimentos:
+
 ```bash
 python3 main.py
 ```
 
-Neste estado inicial, `main.py` não executa as questões do trabalho; ele contém apenas a organização das seções.
+A execução imprime os resultados no terminal e salva os gráficos em:
+
+```text
+graficosGerados/
+```
+
+## Gráficos Gerados
+
+Os principais gráficos produzidos são:
+
+- `graficosGerados/secao-1/q1_3_passo_otimo.png`
+- `graficosGerados/secao-2/q2_4_erros_newton_cotes.png`
+- `graficosGerados/secao-3/q3_2_erro_por_custo.png`
+- `graficosGerados/secao-5/q5_1_comprimento_curva.png`
+
