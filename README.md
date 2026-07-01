@@ -31,6 +31,7 @@ Derivacao_Integracao/
 │   ├── secao-2/
 │   ├── secao-3/
 │   └── secao-5/
+│   └── secao-6/
 └── relatorio/
 ```
 
@@ -80,3 +81,6 @@ Os principais gráficos produzidos são:
 - `graficosGerados/secao-2/q2_4_erros_newton_cotes.png`
 - `graficosGerados/secao-3/q3_2_erro_por_custo.png`
 - `graficosGerados/secao-5/q5_1_comprimento_curva.png`
+- `graficosGerados/secao-6/q6_2_comparacao_2d.png`
+- `graficosGerados/secao-6/q6_2_monte_carlo_1d.png`
+- `graficosGerados/secao-6/q6_3_gradient_check`
