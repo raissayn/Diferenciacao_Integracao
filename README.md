@@ -80,4 +80,3 @@ Os principais gráficos produzidos são:
 - `graficosGerados/secao-2/q2_4_erros_newton_cotes.png`
 - `graficosGerados/secao-3/q3_2_erro_por_custo.png`
 - `graficosGerados/secao-5/q5_1_comprimento_curva.png`
-

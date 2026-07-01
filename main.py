@@ -102,14 +102,6 @@ def menor_n_simpson(f, a, b, exato, tol, limite=200000):
 
 
 # ===========================================================================
-# CONFERÊNCIA DOS CÓDIGOS-BASE
-# ===========================================================================
-print("=" * 60)
-print("CONFERÊNCIA DOS CÓDIGOS-BASE")
-print("=" * 60)
-print("\n  diferencas.py e integracao.py conferem com os blocos do PDF.")
-
-# ===========================================================================
 # SEÇÃO 1 — Fórmulas de Diferenças Finitas
 # ===========================================================================
 print("\n" + "=" * 60)
@@ -635,6 +627,326 @@ add_tabela(["x", "Tabela", "Simpson n=100", "Erro S", "GL n=5", "GL n=10", "GL n
 z_grid = np.linspace(1.8, 2.1, 301)
 phi_grid = np.array([gauss_legendre(normal, -6, z, 20) for z in z_grid])
 z_crit = np.interp(0.975, phi_grid, z_grid)
+
+# ===========================================================================
+# SEÇÃO 6 — Desafios Computacionais
+# ===========================================================================
+print("\n" + "=" * 60)
+print("SEÇÃO 6 — Desafios Computacionais")
+print("=" * 60)
+Path("graficosGerados/secao-6").mkdir(parents=True, exist_ok=True)
+
+# ============================================================
+# Q6.1 — Extrapolação de Richardson e tabela de Romberg
+# ============================================================
+print("\n" + "=" * 60)
+print("Q6.1 — Extrapolação de Richardson e tabela de Romberg")
+print("=" * 60)
+
+
+def richardson_trapezio(f, a, b, n):
+    t_h = trapezios(f, a, b, n)
+    t_h2 = trapezios(f, a, b, 2 * n)
+    return (4 * t_h2 - t_h) / 3
+
+
+def romberg(f, a, b, n_inicial, niveis):
+    tabela = np.full((niveis, niveis), np.nan)
+    ns_romberg = []
+
+    for i in range(niveis):
+        n = n_inicial * 2**i
+        ns_romberg.append(n)
+        tabela[i, 0] = trapezios(f, a, b, n)
+
+        for j in range(1, i + 1):
+            tabela[i, j] = tabela[i, j - 1] + (
+                tabela[i, j - 1] - tabela[i - 1, j - 1]
+            ) / (4**j - 1)
+
+    return np.array(ns_romberg), tabela
+
+
+n_base = 2
+r_h = richardson_trapezio(f_inv, 1, 2, n_base)
+s_equivalente = simpson13(f_inv, 1, 2, 2 * n_base)
+
+linhas = [
+    ["Richardson", n_base, 2 * n_base, fmt(r_h), fmt(abs(r_h - exato_ln2), 8)],
+    ["Simpson 1/3", "-", 2 * n_base, fmt(s_equivalente), fmt(abs(s_equivalente - exato_ln2), 8)],
+    ["Diferença R - S", "-", "-", fmt(abs(r_h - s_equivalente), 8), "-"],
+]
+add_tabela(["Método", "n em T(h)", "n final", "Resultado", "Erro"], linhas)
+
+ns_romberg, tabela_romberg = romberg(f_inv, 1, 2, 2, 3)
+linhas = []
+for i, n in enumerate(ns_romberg):
+    linha = [fmt(1 / n, 6), n]
+    for j in range(3):
+        linha.append(fmt(tabela_romberg[i, j]) if j <= i else "-")
+    linhas.append(linha)
+
+print("\n  Tabela de Romberg para h = 0,5; 0,25; 0,125:")
+add_tabela(["h", "n", "R(i,0)", "R(i,1)", "R(i,2)"], linhas)
+
+tol_romberg = 1e-10
+for niveis_romberg in range(1, 15):
+    ns_romberg_tol, tabela_romberg_tol = romberg(f_inv, 1, 2, 2, niveis_romberg)
+    valor_romberg = tabela_romberg_tol[-1, -1]
+    erro_romberg = abs(valor_romberg - exato_ln2)
+    if erro_romberg < tol_romberg:
+        break
+
+n_final_romberg = int(ns_romberg_tol[-1])
+avaliacoes_romberg = n_final_romberg + 1
+n_gauss_romberg = next(
+    n for n in range(1, 30)
+    if abs(gauss_legendre(f_inv, 1, 2, n) - exato_ln2) < tol_romberg
+)
+valor_gauss_romberg = gauss_legendre(f_inv, 1, 2, n_gauss_romberg)
+
+linhas = [
+    ["Romberg", niveis_romberg, avaliacoes_romberg, fmt(valor_romberg), fmt(erro_romberg, 8)],
+    ["Gauss-Legendre", n_gauss_romberg, n_gauss_romberg, fmt(valor_gauss_romberg), fmt(abs(valor_gauss_romberg - exato_ln2), 8)],
+]
+print("\n  Eficiência para erro menor que 1e-10:")
+add_tabela(["Método", "Nível/n", "Avaliações de f", "Resultado", "Erro"], linhas)
+
+# ============================================================
+# Q6.2 — Integração de Monte Carlo
+# ============================================================
+print("\n" + "=" * 60)
+print("Q6.2 — Integração de Monte Carlo")
+print("=" * 60)
+
+
+def monte_carlo_1d(f, a, b, n_amostras, rng):
+    pontos = rng.uniform(a, b, n_amostras)
+    return (b - a) * np.mean(f(pontos))
+
+
+def monte_carlo_2d(f, ax, bx, ay, by, n_amostras, rng):
+    x_mc = rng.uniform(ax, bx, n_amostras)
+    y_mc = rng.uniform(ay, by, n_amostras)
+    return (bx - ax) * (by - ay) * np.mean(f(x_mc, y_mc))
+
+
+ns_mc = np.array([10**2, 10**3, 10**4, 10**5], dtype=int)
+repeticoes_mc = 20
+rng_mc_1d = np.random.default_rng(42)
+erros_medios_mc = []
+desvios_erros_mc = []
+medias_estimativas_mc = []
+linhas = []
+
+for n_mc in ns_mc:
+    estimativas = np.array([
+        monte_carlo_1d(f_exp2, 0, 1, int(n_mc), rng_mc_1d)
+        for _ in range(repeticoes_mc)
+    ])
+    erros = np.abs(estimativas - exato_exp2)
+    media_erro = float(np.mean(erros))
+    desvio_erro = float(np.std(erros, ddof=1))
+    media_estimativa = float(np.mean(estimativas))
+    erros_medios_mc.append(media_erro)
+    desvios_erros_mc.append(desvio_erro)
+    medias_estimativas_mc.append(media_estimativa)
+    linhas.append([
+        int(n_mc),
+        fmt(media_estimativa),
+        fmt(media_erro, 8),
+        fmt(desvio_erro, 8),
+    ])
+
+add_tabela(["N", "Estimativa média", "Erro absoluto médio", "Desvio dos erros"], linhas)
+
+erros_medios_mc = np.array(erros_medios_mc)
+inclinacao_mc = np.polyfit(np.log10(ns_mc), np.log10(erros_medios_mc), 1)[0]
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.loglog(ns_mc, erros_medios_mc, "o-", lw=2, label="Erro médio — Monte Carlo")
+ax.loglog(
+    ns_mc,
+    erros_medios_mc[0] * (ns_mc / ns_mc[0]) ** -0.5,
+    "k:",
+    lw=1.3,
+    label="referência N⁻¹ᐟ²",
+)
+ax.set(
+    title="Q6.2 — Monte Carlo em ∫₀¹ exp(-x²) dx",
+    xlabel="Número de amostras N",
+    ylabel="Erro absoluto médio (20 execuções)",
+)
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.savefig("graficosGerados/secao-6/q6_2_monte_carlo_1d.png", dpi=150)
+plt.close(fig)
+print("\n  [Gráfico salvo: graficosGerados/secao-6/q6_2_monte_carlo_1d.png]")
+print(f"  Inclinação experimental no gráfico log-log: {inclinacao_mc:.4f}")
+
+segundo_momento = sqrt(np.pi) / (2 * sqrt(2)) * erf(sqrt(2))
+desvio_integrando = sqrt(segundo_momento - exato_exp2**2)
+constante_erro_medio = desvio_integrando * sqrt(2 / np.pi)
+tol_mc = 1e-4
+n_mc_estimado = int(np.ceil((constante_erro_medio / tol_mc) ** 2))
+n_gauss_1e4 = next(
+    n for n in range(1, 30)
+    if abs(gauss_legendre(f_exp2, 0, 1, n) - exato_exp2) < tol_mc
+)
+dimensao_cruzamento = int(np.floor(np.log(n_mc_estimado) / np.log(n_gauss_1e4))) + 1
+
+linhas = [
+    ["Monte Carlo", n_mc_estimado, n_mc_estimado, "estimativa assintótica"],
+    ["Gauss-Legendre 1D", n_gauss_1e4, n_gauss_1e4, "erro verificado"],
+    ["Gauss-Legendre tensorial", f"d = {dimensao_cruzamento}", n_gauss_1e4**dimensao_cruzamento, "primeiro custo acima do MC"],
+]
+print("\n  Custo estimado para erro menor que 1e-4:")
+add_tabela(["Método", "n/dimensão", "Avaliações", "Critério"], linhas)
+
+f_exp2_2d = lambda x_mc, y_mc: np.exp(-(x_mc**2 + y_mc**2))
+exato_exp2_2d = exato_exp2**2
+rng_mc_2d = np.random.default_rng(2026)
+erros_medios_mc_2d = []
+linhas_mc_2d = []
+
+for n_mc in ns_mc:
+    estimativas = np.array([
+        monte_carlo_2d(f_exp2_2d, 0, 1, 0, 1, int(n_mc), rng_mc_2d)
+        for _ in range(repeticoes_mc)
+    ])
+    erros = np.abs(estimativas - exato_exp2_2d)
+    erro_medio = float(np.mean(erros))
+    erros_medios_mc_2d.append(erro_medio)
+    linhas_mc_2d.append([
+        "Monte Carlo",
+        int(n_mc),
+        int(n_mc),
+        fmt(np.mean(estimativas)),
+        fmt(erro_medio, 8),
+    ])
+
+erros_gauss_2d = []
+avaliacoes_gauss_2d = []
+for n_gauss_2d in [2, 3, 4, 5, 6]:
+    valor_gauss_2d = gauss_legendre(f_exp2, 0, 1, n_gauss_2d) ** 2
+    erro_gauss_2d = abs(valor_gauss_2d - exato_exp2_2d)
+    avaliacoes = n_gauss_2d**2
+    erros_gauss_2d.append(max(erro_gauss_2d, np.finfo(float).eps))
+    avaliacoes_gauss_2d.append(avaliacoes)
+    linhas_mc_2d.append([
+        "Gauss tensorial",
+        n_gauss_2d,
+        avaliacoes,
+        fmt(valor_gauss_2d),
+        fmt(erro_gauss_2d, 8),
+    ])
+
+print("\n  Integral bidimensional em [0,1] × [0,1]:")
+add_tabela(["Método", "N/n", "Avaliações", "Resultado", "Erro"], linhas_mc_2d)
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.loglog(ns_mc, erros_medios_mc_2d, "o-", lw=2, label="Monte Carlo 2D")
+ax.loglog(avaliacoes_gauss_2d, erros_gauss_2d, "s-", lw=2, label="Gauss-Legendre tensorial")
+ax.set(
+    title="Q6.2 — Comparação em duas dimensões",
+    xlabel="Avaliações do integrando",
+    ylabel="Erro absoluto",
+)
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.savefig("graficosGerados/secao-6/q6_2_comparacao_2d.png", dpi=150)
+plt.close(fig)
+print("  [Gráfico salvo: graficosGerados/secao-6/q6_2_comparacao_2d.png]")
+
+# ============================================================
+# Q6.3 — Gradient check por diferenças centrais
+# ============================================================
+print("\n" + "=" * 60)
+print("Q6.3 — Gradient check por diferenças centrais")
+print("=" * 60)
+
+rng_grad = np.random.default_rng(2026)
+x_grad = rng_grad.normal(size=(20, 3))
+theta = rng_grad.normal(size=3)
+theta_referencia = rng_grad.normal(size=3)
+y_grad = x_grad @ theta_referencia + 0.05 * rng_grad.normal(size=20)
+
+
+def perda_quadratica(theta_atual):
+    residuos = x_grad @ theta_atual - y_grad
+    return np.sum(residuos**2)
+
+
+def gradiente_numerico(theta_atual, epsilon):
+    grad = np.zeros_like(theta_atual, dtype=float)
+
+    for i in range(len(theta_atual)):
+        def perda_coordenada(valor, indice=i):
+            theta_teste = theta_atual.copy()
+            theta_teste[indice] = valor
+            return perda_quadratica(theta_teste)
+
+        grad[i] = df_central(perda_coordenada, theta_atual[i], epsilon)
+
+    return grad
+
+
+grad_analitico = 2 * x_grad.T @ (x_grad @ theta - y_grad)
+epsilon_grad = 1e-5
+grad_numerico = gradiente_numerico(theta, epsilon_grad)
+diferenca_relativa = np.linalg.norm(grad_analitico - grad_numerico) / np.linalg.norm(grad_analitico)
+
+linhas = []
+for i in range(3):
+    linhas.append([
+        i,
+        fmt(theta[i]),
+        fmt(grad_analitico[i]),
+        fmt(grad_numerico[i]),
+        fmt(abs(grad_analitico[i] - grad_numerico[i]), 8),
+    ])
+
+add_tabela(["i", "θᵢ", "Gradiente analítico", "Gradiente numérico", "Diferença"], linhas)
+print(f"\n  Diferença relativa = {diferenca_relativa:.6e}")
+print(f"  Gradient check: {'APROVADO' if diferenca_relativa < 1e-5 else 'REPROVADO'}")
+
+epsilons_grad = np.logspace(-1, -16, 100)
+erros_grad = []
+for epsilon_teste in epsilons_grad:
+    grad_teste = gradiente_numerico(theta, epsilon_teste)
+    erro_relativo = np.linalg.norm(grad_analitico - grad_teste) / np.linalg.norm(grad_analitico)
+    erros_grad.append(max(float(erro_relativo), np.finfo(float).eps))
+
+erros_grad = np.array(erros_grad)
+idx_melhor_epsilon = int(np.argmin(erros_grad))
+
+linhas = []
+for epsilon_teste in [1e-1, 1e-3, 1e-5, 1e-7, 1e-9, 1e-11, 1e-13, 1e-15]:
+    grad_teste = gradiente_numerico(theta, epsilon_teste)
+    erro_relativo = np.linalg.norm(grad_analitico - grad_teste) / np.linalg.norm(grad_analitico)
+    linhas.append([fmt(epsilon_teste, 8), fmt(erro_relativo, 8)])
+
+print("\n  Sensibilidade do gradient check ao valor de ε:")
+add_tabela(["ε", "Diferença relativa"], linhas)
+print(
+    f"\n  Melhor ε no intervalo testado = {epsilons_grad[idx_melhor_epsilon]:.6e} "
+    f"| diferença relativa = {erros_grad[idx_melhor_epsilon]:.6e}"
+)
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.loglog(epsilons_grad, erros_grad, lw=2, label="Diferença relativa")
+ax.axvline(epsilon_grad, color="0.35", ls=":", label="ε = 1e-5")
+ax.set(
+    title="Q6.3 — Sensibilidade do gradient check",
+    xlabel="ε",
+    ylabel="Diferença relativa entre gradientes",
+)
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.savefig("graficosGerados/secao-6/q6_3_gradient_check.png", dpi=150)
+plt.close(fig)
+print("  [Gráfico salvo: graficosGerados/secao-6/q6_3_gradient_check.png]")
+
 
 
 # ===========================================================================
