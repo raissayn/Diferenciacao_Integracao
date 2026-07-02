@@ -25,14 +25,7 @@ Derivacao_Integracao/
 ├── integracao.py
 ├── main.py
 ├── requirements.txt
-├── README.md
-├── graficosGerados/
-│   ├── secao-1/
-│   ├── secao-2/
-│   ├── secao-3/
-│   └── secao-5/
-│   └── secao-6/
-└── relatorio/
+└── README.md
 ```
 
 ## Arquivos Principais
@@ -40,7 +33,7 @@ Derivacao_Integracao/
 - `diferencas.py`: implementa as fórmulas de diferenças finitas fornecidas no roteiro.
 - `integracao.py`: implementa Ponto Médio, Trapézios, Simpson 1/3, integração por tabela, cotas de erro e Gauss-Legendre.
 - `main.py`: executa os experimentos, imprime tabelas/resultados no terminal e gera os gráficos.
-- `graficosGerados/`: contém as figuras geradas em formato `.png` para uso no relatório.
+- `graficosGerados/`: pasta criada automaticamente ao executar `main.py`, contendo as figuras em formato `.png` para uso no relatório.
 - `requirements.txt`: lista as dependências necessárias para executar o projeto.
 
 ## Dependências
@@ -73,6 +66,8 @@ A execução imprime os resultados no terminal e salva os gráficos em:
 graficosGerados/
 ```
 
+Essa pasta não precisa ser enviada previamente, pois é recriada automaticamente pelo programa.
+
 ## Gráficos Gerados
 
 Os principais gráficos produzidos são:
@@ -83,4 +78,4 @@ Os principais gráficos produzidos são:
 - `graficosGerados/secao-5/q5_1_comprimento_curva.png`
 - `graficosGerados/secao-6/q6_2_comparacao_2d.png`
 - `graficosGerados/secao-6/q6_2_monte_carlo_1d.png`
-- `graficosGerados/secao-6/q6_3_gradient_check`
+- `graficosGerados/secao-6/q6_3_gradient_check.png`

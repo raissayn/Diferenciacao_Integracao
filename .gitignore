@@ -8,6 +8,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Saídas geradas pela execução
+graficosGerados/
+.matplotlib/
+
 # Configurações locais e variáveis de ambiente
 .env
 .env.*
